@@ -80,4 +80,19 @@ public class MonoTest {
 
         StepVerifier.create(mono).expectNext(uuid.toUpperCase()).verifyComplete();
     }
+
+    @Test
+    public void monoSubscriberWithConsumerSubscriptionBackpressure() {
+        var uuid = UUID.randomUUID().toString();
+        var mono = Mono.just(uuid).map(String::toUpperCase);
+
+        mono.subscribe(
+                s -> log.info("Value {}", s),
+                Throwable::printStackTrace,
+                () -> log.info("finished."),
+                subscription -> subscription.request(5)
+        );
+
+        StepVerifier.create(mono).expectNext(uuid.toUpperCase()).verifyComplete();
+    }
 }
