@@ -356,4 +356,41 @@ public class OperatorsTest {
                 Flux.just("nameA1", "nameA2").delayElements(Duration.ofMillis(200)) :
                 Flux.just("nameB1", "nameB2");
     }
+
+    @Test
+    public void zipOperator() {
+        var titleFlux = Flux.just("Grand Blue", "Baki");
+        var studioFlux = Flux.just("Zero-G", "TMS Entertainment");
+        var episodeFlux = Flux.just(12, 24);
+
+        var animeFlux = Flux.zip(titleFlux, studioFlux, episodeFlux)
+                .flatMap(tuple -> Flux.just(new Anime(tuple.getT1(), tuple.getT2(), tuple.getT3())));
+
+        StepVerifier.create(animeFlux)
+                .expectSubscription()
+                .expectNext(new Anime("Grand Blue", "Zero-G", 12))
+                .expectNext(new Anime("Baki", "TMS Entertainment", 24))
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    public void zipWithOperator() {
+        var titleFlux = Flux.just("Grand Blue", "Baki");
+        var episodeFlux = Flux.just(12, 24);
+
+        var animeFlux = titleFlux.zipWith(episodeFlux)
+                .flatMap(tuple -> Flux.just(new Anime(tuple.getT1(), "", tuple.getT2())));
+
+        StepVerifier.create(animeFlux)
+                .expectSubscription()
+                .expectNext(new Anime("Grand Blue", "", 12))
+                .expectNext(new Anime("Baki", "", 24))
+                .expectComplete()
+                .verify();
+    }
+
+    record Anime(String title, String studio, int episodes) {
+
+    }
 }
