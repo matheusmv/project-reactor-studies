@@ -189,4 +189,17 @@ public class FluxTest {
     private Flux<Long> createInterval() {
         return Flux.interval(Duration.ofDays(1)).take(10).log();
     }
+
+    @Test
+    public void fluxSubscriberNumbersPrettyBackpressure() {
+        var flux = Flux.range(1, 10).log().limitRate(2);
+
+        flux.subscribe(
+                i -> log.info("Number {}", i)
+        );
+
+        StepVerifier.create(flux)
+                .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                .verifyComplete();
+    }
 }
