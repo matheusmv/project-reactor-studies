@@ -322,4 +322,38 @@ public class OperatorsTest {
                 .expectError(IllegalArgumentException.class)
                 .verify();
     }
+
+    @Test
+    public void flatMapOperator() {
+        var flux1 = Flux.just("a", "b");
+
+        var flux = flux1.map(String::toUpperCase)
+                .flatMap(this::findByName);  // does not preserve the original order of the elements
+
+        StepVerifier.create(flux)
+                .expectSubscription()
+                .expectNext("nameB1", "nameB2", "nameA1", "nameA2")
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    public void flatMapSequentialOperator() {
+        var flux1 = Flux.just("a", "b");
+
+        var flux = flux1.map(String::toUpperCase)
+                .flatMapSequential(this::findByName);  // preserve the original order of the elements
+
+        StepVerifier.create(flux)
+                .expectSubscription()
+                .expectNext("nameA1", "nameA2", "nameB1", "nameB2")
+                .expectComplete()
+                .verify();
+    }
+
+    private Flux<String> findByName(String name) {
+        return name.equals("A") ?
+                Flux.just("nameA1", "nameA2").delayElements(Duration.ofMillis(200)) :
+                Flux.just("nameB1", "nameB2");
+    }
 }
