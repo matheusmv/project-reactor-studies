@@ -1,10 +1,15 @@
 package com.github.matheusmv.reactive.test;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Slf4j
 public class OperatorsTest {
@@ -136,6 +141,24 @@ public class OperatorsTest {
         StepVerifier.create(flux)
                 .expectSubscription()
                 .expectNext(1, 2, 3, 4)
+                .verifyComplete();
+    }
+
+    @Test
+    public void subscribeOnIO() throws InterruptedException {
+        // execute blocking operations or call external APIs in a separate thread
+        // recommendation : Schedulers.boundedElastic()
+
+        var listOfStrings = Mono.fromCallable(() -> Files.readAllLines(Path.of("text-file.txt")))
+                .subscribeOn(Schedulers.boundedElastic());
+
+        StepVerifier.create(listOfStrings)
+                .expectSubscription()
+                .thenConsumeWhile(list -> {
+                    Assertions.assertFalse(list::isEmpty);
+                    log.info("Size: {}", list.size());
+                    return true;
+                })
                 .verifyComplete();
     }
 }
