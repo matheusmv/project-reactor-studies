@@ -226,4 +226,18 @@ public class FluxTest {
                 .expectComplete()
                 .verify();
     }
+
+    @Test
+    public void connectableFluxAutoConnect() throws InterruptedException {
+        var flux = Flux.range(1, 5)
+                .delayElements(Duration.ofMillis(100))
+                .publish()
+                .autoConnect(2);
+
+        StepVerifier.create(flux)
+                .then(flux::subscribe)
+                .expectNext(1, 2, 3, 4, 5)
+                .expectComplete()
+                .verify();
+    }
 }
