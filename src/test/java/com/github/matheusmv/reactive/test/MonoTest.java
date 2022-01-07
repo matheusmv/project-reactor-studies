@@ -19,4 +19,35 @@ public class MonoTest {
 
         StepVerifier.create(mono).expectNext(uuid).verifyComplete();
     }
+
+    @Test
+    public void monoSubscriberWithConsumer() {
+        var uuid = UUID.randomUUID().toString();
+        var mono = Mono.just(uuid).log();
+
+        mono.subscribe(s -> log.info("Value {}", s));
+
+        StepVerifier.create(mono).expectNext(uuid).verifyComplete();
+    }
+
+    @Test
+    public void monoSubscriberWithConsumerError() {
+        var uuid = UUID.randomUUID().toString();
+        var mono = Mono.just(uuid)
+                .map(s -> {
+                    throw new RuntimeException("Testing mono with error");
+                });
+
+        mono.subscribe(
+                s -> log.info("Value {}", s),
+                s -> log.error("Something went wrong")
+        );
+
+        mono.subscribe(
+                s -> log.info("Value {}", s),
+                Throwable::printStackTrace
+        );
+
+        StepVerifier.create(mono).expectError(RuntimeException.class).verify();
+    }
 }
