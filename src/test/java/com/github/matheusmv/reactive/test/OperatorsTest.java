@@ -198,4 +198,48 @@ public class OperatorsTest {
         mono.subscribe(atomicLong::set);
         Assertions.assertTrue(atomicLong.get() > 0);
     }
+
+    @Test
+    public void concatOperator() {
+        var flux1 = Flux.just("A", "B");
+        var flux2 = Flux.just("C", "D");
+        var concatFlux = Flux.concat(flux1, flux2);
+
+        StepVerifier.create(concatFlux)
+                .expectSubscription()
+                .expectNext("A", "B", "C", "D")
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    public void concatWithOperator() {
+        var flux1 = Flux.just("A", "B");
+        var flux2 = Flux.just("C", "D");
+        var concatFlux = flux1.concatWith(flux2);
+
+        StepVerifier.create(concatFlux)
+                .expectSubscription()
+                .expectNext("A", "B", "C", "D")
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    public void combineLatestOperator() {
+        // delay can affect the result
+
+        var flux1 = Flux.just("A", "B");
+        var flux2 = Flux.just("C", "D");
+
+        var combinedLatestFLux = Flux.combineLatest(
+                flux1, flux2,
+                (value1, value2) -> value1.toLowerCase().concat(value2.toLowerCase()));
+
+        StepVerifier.create(combinedLatestFLux)
+                .expectSubscription()
+                .expectNext("bc", "bd")
+                .expectComplete()
+                .verify();
+    }
 }
