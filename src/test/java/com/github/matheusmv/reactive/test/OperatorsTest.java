@@ -271,4 +271,17 @@ public class OperatorsTest {
                 .expectComplete()
                 .verify();
     }
+
+    @Test
+    public void mergeSequentialOperator() {
+        var flux1 = Flux.just("A", "B").delayElements(Duration.ofMillis(2));
+        var flux2 = Flux.just("C", "D");
+        var mergeFlux = Flux.mergeSequential(flux1, flux2, flux1);
+
+        StepVerifier.create(mergeFlux)
+                .expectSubscription()
+                .expectNext("A", "B", "C", "D", "A", "B")
+                .expectComplete()
+                .verify();
+    }
 }
