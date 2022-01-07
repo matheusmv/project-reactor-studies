@@ -202,4 +202,28 @@ public class FluxTest {
                 .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
                 .verifyComplete();
     }
+
+    @Test
+    public void connectableFlux() throws InterruptedException {
+        var flux = Flux.range(1, 10)
+                .delayElements(Duration.ofMillis(100))
+                .publish();
+
+//        flux.connect();
+//
+//        Thread.sleep(300);
+//
+//        flux.subscribe(i -> log.info("Number {}", i));
+//
+//        Thread.sleep(200);
+//
+//        flux.subscribe(i -> log.info("Number {}", i));
+
+        StepVerifier.create(flux)
+                .then(flux::connect)
+                .thenConsumeWhile(i -> i <= 5)
+                .expectNext(6, 7, 8, 9, 10)
+                .expectComplete()
+                .verify();
+    }
 }
