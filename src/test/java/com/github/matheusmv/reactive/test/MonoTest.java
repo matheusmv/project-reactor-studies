@@ -124,4 +124,18 @@ public class MonoTest {
 
         StepVerifier.create(error).expectError(IllegalArgumentException.class).verify();
     }
+
+    @Test
+    public void monoOnErrorResume() {
+        var uuid = UUID.randomUUID().toString();
+        var error = Mono.error(new IllegalArgumentException("Illegal argument"))
+                .doOnError(e -> log.error("Error message: {}", e.getMessage()))
+                .onErrorResume(s -> {
+                    log.error("onErrorResume");
+                    return Mono.just(uuid);
+                })
+                .log();
+
+        StepVerifier.create(error).expectNext(uuid).verifyComplete();
+    }
 }
