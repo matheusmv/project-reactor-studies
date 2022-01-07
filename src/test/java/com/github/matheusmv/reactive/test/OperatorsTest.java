@@ -35,11 +35,99 @@ public class OperatorsTest {
         // the events that are after publishOn will be executed in a different thread
 
         var flux = Flux.range(1, 4)
-                .map(i -> {
+                .map(i -> {  // main thread
                     log.info("Map 1 - Number {} on Thread {}", i, Thread.currentThread().getName());
                     return i;
                 })
                 .publishOn(Schedulers.single())
+                .map(i -> {
+                    log.info("Map 2 - Number {} on Thread {}", i, Thread.currentThread().getName());
+                    return i;
+                });
+
+        StepVerifier.create(flux)
+                .expectSubscription()
+                .expectNext(1, 2, 3, 4)
+                .verifyComplete();
+    }
+
+    @Test
+    public void multipleSubscribeOn() {
+        // only the first subscribeOn will be applied
+
+        var flux = Flux.range(1, 4)
+                .subscribeOn(Schedulers.single())
+                .map(i -> {
+                    log.info("Map 1 - Number {} on Thread {}", i, Thread.currentThread().getName());
+                    return i;
+                })
+                .subscribeOn(Schedulers.boundedElastic())  // ignored
+                .map(i -> {
+                    log.info("Map 2 - Number {} on Thread {}", i, Thread.currentThread().getName());
+                    return i;
+                });
+
+        StepVerifier.create(flux)
+                .expectSubscription()
+                .expectNext(1, 2, 3, 4)
+                .verifyComplete();
+    }
+
+    @Test
+    public void multiplePublisherOn() {
+        // the events that are after publishOn will be executed in a different thread
+
+        var flux = Flux.range(1, 4)
+                .publishOn(Schedulers.single())
+                .map(i -> {
+                    log.info("Map 1 - Number {} on Thread {}", i, Thread.currentThread().getName());
+                    return i;
+                })
+                .publishOn(Schedulers.boundedElastic())
+                .map(i -> {
+                    log.info("Map 2 - Number {} on Thread {}", i, Thread.currentThread().getName());
+                    return i;
+                });
+
+        StepVerifier.create(flux)
+                .expectSubscription()
+                .expectNext(1, 2, 3, 4)
+                .verifyComplete();
+    }
+
+    @Test
+    public void publisherOnAndSubscribeOn() {
+        // publishOn has the highest order of precedence
+
+        var flux = Flux.range(1, 4)
+                .publishOn(Schedulers.single())
+                .map(i -> {
+                    log.info("Map 1 - Number {} on Thread {}", i, Thread.currentThread().getName());
+                    return i;
+                })
+                .subscribeOn(Schedulers.boundedElastic())  // ignored
+                .map(i -> {
+                    log.info("Map 2 - Number {} on Thread {}", i, Thread.currentThread().getName());
+                    return i;
+                });
+
+        StepVerifier.create(flux)
+                .expectSubscription()
+                .expectNext(1, 2, 3, 4)
+                .verifyComplete();
+    }
+
+    @Test
+    public void subscribeOnAndPublisherOn() {
+        // the events that are after publishOn will be executed in a different thread
+
+        var flux = Flux.range(1, 4)
+                .subscribeOn(Schedulers.single())
+                .map(i -> {
+                    log.info("Map 1 - Number {} on Thread {}", i, Thread.currentThread().getName());
+                    return i;
+                })
+                .publishOn(Schedulers.boundedElastic())  // different thread
                 .map(i -> {
                     log.info("Map 2 - Number {} on Thread {}", i, Thread.currentThread().getName());
                     return i;
