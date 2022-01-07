@@ -2,6 +2,7 @@ package com.github.matheusmv.reactive.test;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Subscription;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -60,6 +61,21 @@ public class MonoTest {
                 s -> log.info("Value {}", s),
                 Throwable::printStackTrace,
                 () -> log.info("finished.")
+        );
+
+        StepVerifier.create(mono).expectNext(uuid.toUpperCase()).verifyComplete();
+    }
+
+    @Test
+    public void monoSubscriberWithConsumerSubscription() {
+        var uuid = UUID.randomUUID().toString();
+        var mono = Mono.just(uuid).map(String::toUpperCase);
+
+        mono.subscribe(
+                s -> log.info("Value {}", s),
+                Throwable::printStackTrace,
+                () -> log.info("finished."),
+                Subscription::cancel
         );
 
         StepVerifier.create(mono).expectNext(uuid.toUpperCase()).verifyComplete();
