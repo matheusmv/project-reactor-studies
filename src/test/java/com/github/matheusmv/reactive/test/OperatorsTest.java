@@ -284,4 +284,42 @@ public class OperatorsTest {
                 .expectComplete()
                 .verify();
     }
+
+    @Test
+    public void concatDelayErrorOperator() {
+        var flux1 = Flux.just("A", "B").map(s -> {
+            if ("B".equals(s)) {
+                throw new IllegalArgumentException("illegal argument");
+            }
+
+            return s;
+        });
+        var flux2 = Flux.just("C", "D");
+        var concatFlux = Flux.concatDelayError(flux1, flux2);
+
+        StepVerifier.create(concatFlux)
+                .expectSubscription()
+                .expectNext("A", "C", "D")
+                .expectError(IllegalArgumentException.class)
+                .verify();
+    }
+
+    @Test
+    public void mergeDelayErrorOperator() {
+        var flux1 = Flux.just("A", "B").map(s -> {
+            if ("B".equals(s)) {
+                throw new IllegalArgumentException("illegal argument");
+            }
+
+            return s;
+        });
+        var flux2 = Flux.just("C", "D");
+        var mergeFlux = Flux.mergeDelayError(1, flux1, flux2);
+
+        StepVerifier.create(mergeFlux)
+                .expectSubscription()
+                .expectNext("A", "C", "D")
+                .expectError(IllegalArgumentException.class)
+                .verify();
+    }
 }
