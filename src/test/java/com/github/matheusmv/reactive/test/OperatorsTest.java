@@ -10,6 +10,7 @@ import reactor.test.StepVerifier;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 public class OperatorsTest {
@@ -160,5 +161,41 @@ public class OperatorsTest {
                     return true;
                 })
                 .verifyComplete();
+    }
+
+    @Test
+    public void switchIfEmptyOperator() {
+        // when a publisher has nothing to return
+
+        var flux = emptyFlux().switchIfEmpty(Flux.just("not empty anymore"));
+
+        StepVerifier.create(flux)
+                .expectSubscription()
+                .expectNext("not empty anymore")
+                .expectComplete();
+    }
+
+    private Flux<Object> emptyFlux() {
+        return Flux.empty();
+    }
+
+    @Test
+    public void deferOperator() throws InterruptedException {
+        var mono = Mono.defer(() -> Mono.just(System.currentTimeMillis()));
+
+        mono.subscribe(l -> log.info("time {}", l));
+        Thread.sleep(200);
+
+        mono.subscribe(l -> log.info("time {}", l));
+        Thread.sleep(200);
+
+        mono.subscribe(l -> log.info("time {}", l));
+        Thread.sleep(200);
+
+        mono.subscribe(l -> log.info("time {}", l));
+
+        var atomicLong = new AtomicLong();
+        mono.subscribe(atomicLong::set);
+        Assertions.assertTrue(atomicLong.get() > 0);
     }
 }
