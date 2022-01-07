@@ -10,6 +10,7 @@ import reactor.test.StepVerifier;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
@@ -239,6 +240,34 @@ public class OperatorsTest {
         StepVerifier.create(combinedLatestFLux)
                 .expectSubscription()
                 .expectNext("bc", "bd")
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    public void mergeOperator() {
+        var flux1 = Flux.just("A", "B").delayElements(Duration.ofMillis(2));
+        var flux2 = Flux.just("C", "D");
+        var mergeFlux = Flux.merge(flux1, flux2);
+
+        StepVerifier.create(mergeFlux)
+                .expectSubscription()
+                .expectNext("C", "D")
+                .expectNext("A", "B")
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    public void mergeWithOperator() {
+        var flux1 = Flux.just("A", "B").delayElements(Duration.ofMillis(2));
+        var flux2 = Flux.just("C", "D");
+        var mergeFlux = flux1.mergeWith(flux2);
+
+        StepVerifier.create(mergeFlux)
+                .expectSubscription()
+                .expectNext("C", "D")
+                .expectNext("A", "B")
                 .expectComplete()
                 .verify();
     }
