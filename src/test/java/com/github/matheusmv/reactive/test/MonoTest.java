@@ -114,4 +114,14 @@ public class MonoTest {
                 () -> log.info("finished.")
         );
     }
+
+    @Test
+    public void monoDoOnError() {
+        var error = Mono.error(new IllegalArgumentException("Illegal argument"))
+                .doOnError(e -> log.error("Error message: {}", e.getMessage()))
+                .doOnNext(s -> log.info("next {}", s))   // not executed
+                .log();
+
+        StepVerifier.create(error).expectError(IllegalArgumentException.class).verify();
+    }
 }
