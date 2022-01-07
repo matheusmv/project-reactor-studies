@@ -95,4 +95,23 @@ public class MonoTest {
 
         StepVerifier.create(mono).expectNext(uuid.toUpperCase()).verifyComplete();
     }
+
+    @Test
+    public void monoDoOnMethods() {
+        var uuid = UUID.randomUUID().toString();
+        var mono = Mono.just(uuid)
+                .map(String::toUpperCase)
+                .doOnSubscribe(subscription -> log.info("Subscribed"))
+                .doOnRequest(value -> log.info("Request received"))
+                .doOnNext(s -> log.info("Value is here {}", s))
+                .flatMap(s -> Mono.empty())
+                .doOnNext(s -> log.info("Value is here {}", s))  // not executed
+                .doOnSuccess(s -> log.info("Successfully executed. Value {}", s));
+
+        mono.subscribe(
+                s -> log.info("Value {}", s),
+                Throwable::printStackTrace,
+                () -> log.info("finished.")
+        );
+    }
 }
