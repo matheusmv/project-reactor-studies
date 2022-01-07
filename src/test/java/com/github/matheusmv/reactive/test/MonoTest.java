@@ -50,4 +50,18 @@ public class MonoTest {
 
         StepVerifier.create(mono).expectError(RuntimeException.class).verify();
     }
+
+    @Test
+    public void monoSubscriberWithConsumerComplete() {
+        var uuid = UUID.randomUUID().toString();
+        var mono = Mono.just(uuid).map(String::toUpperCase);
+
+        mono.subscribe(
+                s -> log.info("Value {}", s),
+                Throwable::printStackTrace,
+                () -> log.info("finished.")
+        );
+
+        StepVerifier.create(mono).expectNext(uuid.toUpperCase()).verifyComplete();
+    }
 }
